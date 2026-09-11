@@ -17,8 +17,8 @@ import (
 )
 
 const (
-    uploaddir  = "/home/pragadeesh/Videos/"
-    staticdir  = "/home/pragadeesh/Documents/file-transfer/static"
+    uploaddir  = "/home/sakthivasan369/Downloads"
+    staticdir  = "/home/sakthivasan369/PROJECTS/file-sharing-system/static"
     serverport = "1234"
 )
 
