@@ -971,6 +971,7 @@
         });
 
         xhr.open('POST', '/upload');
+        xhr.setRequestHeader('Accept', 'application/json');
         xhr.send(formData);
       });
 

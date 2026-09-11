@@ -48,10 +48,10 @@ func main() {
     mux.HandleFunc("/api/network-info", networkInfoHandler)
 
     // 3) Print access URLs + QR code
-    ip := getLocalIP()
+    ips := getLocalIPs()
     fmt.Println("Server started at:")
     fmt.Printf("→ http://localhost:%s/\n", serverport)
-    if ip != "" {
+    for _, ip := range ips {
         url := fmt.Sprintf("http://%s:%s/", ip, serverport)
         fmt.Printf("→ %s\n", url)
         qrterminal.Generate(url, qrterminal.L, os.Stdout)
@@ -201,9 +201,10 @@ func filesAPIHandler(w http.ResponseWriter, r *http.Request) {
 // networkInfoHandler returns network information as JSON
 func networkInfoHandler(w http.ResponseWriter, r *http.Request) {
     clientIP := getClientIP(r)
-    serverIP := getLocalIP()
-    if serverIP == "" {
-        serverIP = "localhost"
+    ips := getLocalIPs()
+    serverIP := "localhost"
+    if len(ips) > 0 {
+        serverIP = ips[0]
     }
     networkInterface := getNetworkInterface()
 
@@ -227,20 +228,23 @@ func jsonError(w http.ResponseWriter, message string, status int) {
     json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
-// getLocalIP finds the first non-loopback IPv4 address
-func getLocalIP() string {
+// getLocalIPs finds all non-loopback IPv4 addresses
+func getLocalIPs() []string {
+    var ips []string
     addrs, err := net.InterfaceAddrs()
     if err != nil {
-        return ""
+        return ips
     }
     for _, addr := range addrs {
         if ipnet, ok := addr.(*net.IPNet); ok &&
             !ipnet.IP.IsLoopback() &&
-            ipnet.IP.To4() != nil {
-            return ipnet.IP.String()
+            ipnet.IP.To4() != nil &&
+            !strings.HasPrefix(ipnet.IP.String(), "172.17.") && // ignore docker
+            !strings.HasPrefix(ipnet.IP.String(), "172.20.") {  // ignore docker br
+            ips = append(ips, ipnet.IP.String())
         }
     }
-    return ""
+    return ips
 }
 
 // getClientIP extracts the client IP from the request
